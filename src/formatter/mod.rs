@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::report::Report;
 
 pub mod basic_table;
+pub mod textplot;
 
 pub trait ReportFormatter {
     fn to_string(&self, report: &Report) -> anyhow::Result<String>;

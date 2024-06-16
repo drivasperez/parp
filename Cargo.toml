@@ -1,5 +1,5 @@
 [package]
-name = "psp"
+name = "parp"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,3 +10,5 @@ comfy-table = "7.1.1"
 humansize = "2.1.3"
 humantime = "2.1.0"
 psutil = "3.3.0"
+rgb = "0.8.37"
+textplots = "0.8.6"

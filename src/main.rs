@@ -1,5 +1,6 @@
 use clap::Parser;
 use formatter::basic_table::BasicTableSummary;
+use formatter::textplot::TextplotFormatter;
 use formatter::ReportFormatter;
 use psutil::process;
 use report::Report;
@@ -21,10 +22,10 @@ enum Args {
 
 #[derive(Parser)]
 struct Run {
-    #[clap(short, long, default_value = "true")]
-    memory: bool,
-    #[clap(short, long, default_value = "true")]
-    cpu: bool,
+    #[clap(long, default_value = "false")]
+    graph_memory: bool,
+    #[clap(long, default_value = "false")]
+    graph_cpu: bool,
 
     #[clap(short, long, default_value = "100")]
     interval_ms: u64,
@@ -48,15 +49,9 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     match args {
         Args::Run(run) => {
-            println!("Running command: {:?}", run.command);
-            println!("Memory: {}", run.memory);
-            println!("CPU: {}", run.cpu);
-            println!("Interval: {}", run.interval_ms);
-            println!("Output path: {:?}", run.output_path);
-
             let recorder = Runner {
-                memory: run.memory,
-                cpu: run.cpu,
+                graph_memory: run.graph_memory,
+                graph_cpu: run.graph_cpu,
                 interval: Duration::from_millis(run.interval_ms),
                 output_path: run.output_path,
                 command: run.command,
@@ -77,8 +72,8 @@ fn main() -> anyhow::Result<()> {
 
 #[derive(Debug)]
 struct Runner {
-    memory: bool,
-    cpu: bool,
+    graph_memory: bool,
+    graph_cpu: bool,
     interval: Duration,
     output_path: Option<PathBuf>,
     command: Vec<String>,
@@ -116,13 +111,21 @@ impl Runner {
             std::thread::sleep(self.interval);
         };
 
+        process_handle.wait()?;
+
         let report = Report::new(entries, time_start, time_end);
 
         let res = BasicTableSummary.to_string(&report)?;
 
-        process_handle.wait()?;
-
         println!("{res}");
+
+        if self.graph_memory || self.graph_cpu {
+            let graphs =
+                TextplotFormatter::new(self.graph_memory, self.graph_cpu).to_string(&report)?;
+
+            println!("{}", graphs);
+        }
+
         Ok(())
     }
 }
